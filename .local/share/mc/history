@@ -25,9 +25,9 @@
 5=Aa
 6=4
 7=44
-8=
-9=c-r
-10=0
+8=c-r
+9=0
+10=
 
 [Dir Hist New Right Panel]
 0=/data/data/com.termux/files/home/downloads/Microsoft Windows 3.0 Pre-Release 0.1 (5.25)-1.7z/u7z://
@@ -49,6 +49,6 @@
 0=/data/data/com.termux/files/home/.cache/mc
 1=/data/data/com.termux/files/home/.config
 2=/data/data/com.termux/files/home/.cache
-3=/data/data/com.termux/files/home
-4=/data/data/com.termux/files/home/downloads
-5=/data/data/com.termux/files/home/.config/mc
+3=/data/data/com.termux/files/home/downloads
+4=/data/data/com.termux/files/home/.config/mc
+5=/data/data/com.termux/files/home
