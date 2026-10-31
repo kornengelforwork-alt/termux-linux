@@ -5,6 +5,7 @@ import tty
 import time
 import subprocess
 import socket
+import urllib.request
 
 storage_checked = False
 
@@ -92,20 +93,34 @@ def run_browser():
             print("Closing Browser...")
             time.sleep(1.5)
             return False
-        if url.lower() == 'shutdown win':
+        if url.lower() == 'turnoff':
             return True
         if not url:
             continue
 
         print(f"\nLink: {url}")
-        choice = input("Do you want to download? (Press Enter to download, 'n' then Enter to cancel): ").strip().lower()
+        choice = input("Do you want to download? (Press Enter to download, 'n' to cancel): ").strip().lower()
 
         if choice == 'n':
             print("Download cancelled.\n")
         else:
             print("\nStarting download...")
-            show_loading_bar("Downloading file", 3)
-            print("[SUCCESS] Download complete!\n")
+            filename = url.split("/")[-1]
+            if not filename or "." not in filename:
+                filename = "downloaded_file.zip"
+            
+            download_path = f"/storage/emulated/0/Download/{filename}"
+            
+            try:
+                urllib.request.urlretrieve(url, download_path)
+                print(f"\n[SUCCESS] Real file downloaded to: {download_path}")
+            except Exception as e:
+                print(f"\n[WARNING] Could not reach URL. Creating simulated file...")
+                with open(download_path, "w") as f:
+                    f.write("Simulated download content.")
+                show_loading_bar("Downloading file", 2)
+                print(f"[SUCCESS] Simulated file saved to: {download_path}")
+            print("")
 
 def run_calculator():
     clear_screen()
@@ -117,7 +132,7 @@ def run_calculator():
         try:
             expr = input("Calculator> ").strip()
             if expr.lower() == 'exit': return False 
-            if expr.lower() == 'shutdown win': return True 
+            if expr.lower() == 'turnoff': return True 
             if not expr: continue
             allowed_chars = set("0123456789+-*/(). ")
             if not set(expr).issubset(allowed_chars):
@@ -141,7 +156,7 @@ def run_msword():
     while True:
         try:
             line = input("Write> ")
-            if line.strip().lower() == "shutdown win": return True 
+            if line.strip().lower() == "turnoff": return True 
             if "/exve" in line:
                 text_to_add = line.split("/exve")[0]
                 if text_to_add.strip(): doc_content += text_to_add + "\n"
@@ -182,7 +197,7 @@ def run_fileep():
         try:
             cmd = input("Fileep> ").strip().lower()
             if cmd == 'exit': return False
-            elif cmd == 'shutdown win': return True
+            elif cmd == 'turnoff': return True
             elif cmd == 'dir' or cmd == 'ls':
                 target_dir = "/storage/emulated/0/Download"
                 print(f"\nDirectory of {target_dir}:\n")
@@ -228,11 +243,11 @@ def show_windows_3_professional():
     print("   - Browser (Type 'bs' to open)")
     print("   - Notepad")
     print("==================================================")
-    print("[!] Type 'shutdown win' and press Enter to exit Windows.\n")
+    print("[!] Type 'turnoff' and press Enter to exit Windows.\n")
     
     while True:
         cmd = get_win_input("Program Manager> ")
-        if cmd == "shutdown win": return 
+        if cmd.lower() == "turnoff": return 
         elif cmd.lower() == "cal":
             if run_calculator(): return 
             else: clear_screen(); print("=== WINDOWS 3.0 ===\n  [Returned from Calculator]\n")
@@ -352,4 +367,3 @@ while not exit_program:
         else: print(f"Bad command or file name: {command}\n")
     except KeyboardInterrupt:
         print("\n\nUse 'shutdown' to quit properly.\n")
-

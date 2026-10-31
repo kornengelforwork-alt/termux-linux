@@ -179,3 +179,8 @@ mc
 exit
 exut
 exit
+python
+ls /storage/emulated/0/Download/*.tar.gz
+termux-setup-storage
+tar -xzf /storage/emulated/0/Download/full_j7_backup.tar.gz -C /data/data/com.termux/files --recursive-unlink --preserve-permissions
+exit
