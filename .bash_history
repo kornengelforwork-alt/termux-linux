@@ -184,3 +184,25 @@ ls /storage/emulated/0/Download/*.tar.gz
 termux-setup-storage
 tar -xzf /storage/emulated/0/Download/full_j7_backup.tar.gz -C /data/data/com.termux/files --recursive-unlink --preserve-permissions
 exit
+python
+python win
+nano
+apt purge mc python nano p7zip git && apt install mc python nano p7zip git && apt clean
+rm win3.py && rm linux.py
+nano win3.py
+nano linux.py
+git add .
+git commit -m "Added turnoff command for exiting GUI"
+git push origin main -f
+git push origin main -f
+rm -f /storage/emulated/0/Download/full_j7_backup.tar.gz
+tar -czf /storage/emulated/0/Download/full_j7_backup.tar.gz -C /data/data/com.termux/files ./home ./usr
+apt uninstall python
+ apt uninstall python 
+pkg uninstall python
+tar -xzf /storage/emulated/0/Download/full_j7_backup.tar.gz -C /data/data/com.termux/files --recursive-unlink --preserve-permissions
+exit
+tar -xzf /storage/emulated/0/Download/full_j7_backup.tar.gz -C /data/data/com.termux/files --recursive-unlink --preserve-permissions
+exit
+legacy
+exit
