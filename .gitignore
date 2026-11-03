@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.cache/
+.config/
+.local/
+.bash_history
+.termux/
+storage/
+downloads/
+*.tar.gz
+*.zip
+*.apk
