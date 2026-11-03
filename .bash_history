@@ -206,3 +206,14 @@ tar -xzf /storage/emulated/0/Download/full_j7_backup.tar.gz -C /data/data/com.te
 exit
 legacy
 exit
+sh s.sh
+s.sh
+namo s.sh
+nano s.sh
+sh s.sh
+cd
+nano s.sh
+sh s.sh
+sl
+python kornengelOS.py
+exit
