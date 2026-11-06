@@ -3,7 +3,6 @@ import sys
 import termios
 import tty
 import time
-import subprocess
 import socket
 import urllib.request
 
@@ -70,56 +69,55 @@ def show_loading_bar(prefix, duration=3):
     print("\n\nDone.")
 
 def run_browser():
+    check_storage_permission()
     clear_screen()
     print("==================================================")
     print("               BROWSER (bs) - Windows 3.0")
     print("==================================================")
     print("Checking internet connection...")
     time.sleep(1.5)
-    
     try:
         socket.create_connection(("8.8.8.8", 53), timeout=3)
         print("[OK] Internet Connected.\n")
     except OSError:
         print("[ERROR] No Internet Connection!")
-        print("Browser will now close and return to Program Manager.")
         time.sleep(2.5)
         return False 
-    
     while True:
         url = input("Enter URL (or type 'exit' to close): ").strip()
-        
         if url.lower() == 'exit':
             print("Closing Browser...")
             time.sleep(1.5)
             return False
-        if url.lower() == 'turnoff':
+        if url.lower() == 'turnoff' or url.lower() == 'shutdown win':
             return True
         if not url:
             continue
-
         print(f"\nLink: {url}")
         choice = input("Do you want to download? (Press Enter to download, 'n' to cancel): ").strip().lower()
-
         if choice == 'n':
             print("Download cancelled.\n")
         else:
             print("\nStarting download...")
             filename = url.split("/")[-1]
-            if not filename or "." not in filename:
+            if not filename or "." not in filename or "?" in filename:
                 filename = "downloaded_file.zip"
-            
             download_path = f"/storage/emulated/0/Download/{filename}"
-            
             try:
+                print(f"Saving to: {download_path}")
                 urllib.request.urlretrieve(url, download_path)
-                print(f"\n[SUCCESS] Real file downloaded to: {download_path}")
+                size_kb = os.path.getsize(download_path) / 1024
+                print(f"\n[SUCCESS] Downloaded successfully! ({size_kb:.2f} KB)")
             except Exception as e:
-                print(f"\n[WARNING] Could not reach URL. Creating simulated file...")
-                with open(download_path, "w") as f:
-                    f.write("Simulated download content.")
-                show_loading_bar("Downloading file", 2)
-                print(f"[SUCCESS] Simulated file saved to: {download_path}")
+                print(f"\n[ERROR] Could not download: {e}")
+                print("Creating a simulated file instead...")
+                try:
+                    with open(download_path, "w") as f:
+                        f.write("Simulated download content.")
+                    show_loading_bar("Downloading file", 2)
+                    print(f"[SUCCESS] Simulated file saved to: {download_path}")
+                except PermissionError:
+                    print("[CRITICAL ERROR] Permission Denied!")
             print("")
 
 def run_calculator():
@@ -132,7 +130,7 @@ def run_calculator():
         try:
             expr = input("Calculator> ").strip()
             if expr.lower() == 'exit': return False 
-            if expr.lower() == 'turnoff': return True 
+            if expr.lower() == 'turnoff' or expr.lower() == 'shutdown win': return True 
             if not expr: continue
             allowed_chars = set("0123456789+-*/(). ")
             if not set(expr).issubset(allowed_chars):
@@ -156,7 +154,7 @@ def run_msword():
     while True:
         try:
             line = input("Write> ")
-            if line.strip().lower() == "turnoff": return True 
+            if line.strip().lower() == "shutdown win" or line.strip().lower() == "turnoff": return True 
             if "/exve" in line:
                 text_to_add = line.split("/exve")[0]
                 if text_to_add.strip(): doc_content += text_to_add + "\n"
@@ -168,7 +166,6 @@ def run_msword():
                 folder_path = input("Enter folder: ").strip()
                 if folder_path.startswith("home/"): folder_path = folder_path.replace("home/", "", 1)
                 elif folder_path == "home": folder_path = ""
-                
                 base_dir = "/storage/emulated/0"
                 full_dir = os.path.join(base_dir, folder_path)
                 file_path = os.path.join(full_dir, f"{filename}.{ext}")
@@ -193,13 +190,13 @@ def run_fileep():
     print("           FILE EXPLORER (Windows 3.0)")
     print("==================================================")
     print("  Type 'help' for commands.\n")
+    target_dir = "/storage/emulated/0/Download"
     while True:
         try:
             cmd = input("Fileep> ").strip().lower()
             if cmd == 'exit': return False
-            elif cmd == 'turnoff': return True
+            elif cmd == 'turnoff' or cmd == 'shutdown win': return True
             elif cmd == 'dir' or cmd == 'ls':
-                target_dir = "/storage/emulated/0/Download"
                 print(f"\nDirectory of {target_dir}:\n")
                 if os.path.exists(target_dir):
                     for f in os.listdir(target_dir):
@@ -210,15 +207,29 @@ def run_fileep():
                 filename = cmd.replace('ex ', '').strip()
                 filepath = filename.replace("home/", "/storage/emulated/0/", 1) if filename.startswith("home/") else f"/storage/emulated/0/Download/{filename}"
                 if os.path.exists(filepath):
-                    print(f"\nExtracting {filename}...")
-                    os.system(f'7z x "{filepath}" -o"{os.path.dirname(filepath)}" -p""')
+                    print(f"\nExtracting {filename} using unzip...")
+                    out_dir = os.path.dirname(filepath)
+                    os.system(f'unzip -o "{filepath}" -d "{out_dir}"')
                     input("\nPress Enter to continue...")
                 else: print(f"[ERROR] File not found: {filepath}")
+            elif cmd.startswith('zip '):
+                parts = cmd.split()
+                if len(parts) == 3:
+                    source = parts[1]
+                    dest_zip = parts[2]
+                    source_path = source.replace("home/", "/storage/emulated/0/", 1) if source.startswith("home/") else f"/storage/emulated/0/Download/{source}"
+                    zip_path = dest_zip.replace("home/", "/storage/emulated/0/", 1) if dest_zip.startswith("home/") else f"/storage/emulated/0/Download/{dest_zip}"
+                    if os.path.exists(source_path):
+                        print(f"\nCompressing {source} into {dest_zip}...")
+                        os.system(f'zip -r "{zip_path}" "{source_path}"')
+                        input("\nPress Enter to continue...")
+                    else: print(f"[ERROR] Source not found: {source_path}")
+                else: print("[ERROR] Usage: zip <source> <dest.zip>")
             elif cmd == 'mc':
                 print("\nLaunching mc...")
                 time.sleep(1); os.system('mc'); clear_screen()
             elif cmd == 'help':
-                print("\n  dir / ls - List files\n  ex [file] - Extract\n  mc - File Manager\n  exit - Return\n")
+                print("\n  dir / ls - List files\n  ex [file] - Extract using unzip\n  zip [src] [dst] - Compress to .zip\n  mc - File Manager\n  exit - Return\n")
             elif cmd == "": continue
             else: print("Unknown command.")
         except KeyboardInterrupt: return False
@@ -241,13 +252,11 @@ def show_windows_3_professional():
     print("   - Microsoft Word (Type 'msword' to open)")
     print("   - File Explorer (Type 'fileep' to open)")
     print("   - Browser (Type 'bs' to open)")
-    print("   - Notepad")
     print("==================================================")
-    print("[!] Type 'turnoff' and press Enter to exit Windows.\n")
-    
+    print("[!] Type 'shutdown win' and press Enter to exit Windows.\n")
     while True:
         cmd = get_win_input("Program Manager> ")
-        if cmd.lower() == "turnoff": return 
+        if cmd.lower() == "shutdown win" or cmd.lower() == "turnoff": return 
         elif cmd.lower() == "cal":
             if run_calculator(): return 
             else: clear_screen(); print("=== WINDOWS 3.0 ===\n  [Returned from Calculator]\n")
