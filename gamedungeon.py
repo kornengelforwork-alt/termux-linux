@@ -2,22 +2,20 @@ import os
 import time
 import random
 import sys
-import termios
-import tty
 
-# --- ระบบจัดการภาษา (Language System) ---
 lang = "th" 
 
 texts = {
     "th": {
-        "choose_lang": "เลือกภาษา / Select Language:\nกด 't' สำหรับภาษาไทย\nกด 'e' สำหรับ English\n",
+        "choose_lang": "เลือกภาษา / Select Language:\nพิมพ์ 't' สำหรับภาษาไทย\nพิมพ์ 'e' สำหรับ English\nเลือก: ",
+        "invalid_lang": "กรุณาพิมพ์ 't' หรือ 'e' เท่านั้น",
         "intro1": "คุณตื่นขึ้นมาในดันเจี้ยนที่มืดมิด...",
         "intro2": "มีทางแยกอยู่ด้านหน้าคุณ",
         "status": " ❤️ HP: {hp}/100 | ⚔️ ATK: {atk} | 🧪 Potions: {potions} | 💰 Gold: {gold}",
-        "controls": "\n[การเดิน] กด W(หน้า) A(ซ้าย) S(ถอย) D(ขวา) | Q(ออก)",
-        "invalid_dir": "❌ กรุณากดปุ่ม W, A, S, D เพื่อเดิน หรือ Q เพื่อออก",
+        "controls": "\n[การเดิน] พิมพ์ W(หน้า) A(ซ้าย) S(ถอย) D(ขวา) | Q(ออก) แล้วกด Enter",
+        "invalid_dir": "❌ กรุณาพิมพ์ W, A, S, D เพื่อเดิน หรือ Q เพื่อออก",
         "combat_intro": "\n⚠️ คุณเจอ {name} (HP: {hp}, ATK: {atk})! ⚠️",
-        "combat_ctrl": "\n[การต่อสู้] กด J(โจมตี) K(กินยา) L(หนี)",
+        "combat_ctrl": "\n[การต่อสู้] พิมพ์ J(โจมตี) K(กินยา) L(หนี) แล้วกด Enter",
         "attack": "⚔️ คุณโจมตี {name} สร้างความเสียหาย {dmg} หน่วย!",
         "potion_heal": "🧪 คุณกินยา ฟื้นฟู HP {heal} หน่วย!",
         "no_potion": "❌ คุณมียาไม่พอ!",
@@ -31,18 +29,19 @@ texts = {
         "event_trap_dead": "\n💀 คุณตายเพราะกับดัก! Game Over...",
         "event_fountain": "\n⛲ คุณเจอน้ำพุศักดิ์สิทธิ์! ฟื้นฟู HP {heal} หน่วย!",
         "game_over": "\n=========================================\n💀 YOU DIED 💀\nคุณสะสม Gold ได้ทั้งหมด {gold} ก่อนตาย\nGame Over...\n=========================================",
-        "continue": "\n(กดปุ่มใดก็ได้เพื่อไปต่อ...)",
+        "continue": "\n(กด Enter เพื่อไปต่อ...)",
         "quit": "\nขี้เกียจผจญภัยแล้วเหรอ? Goodbye! 👋"
     },
     "en": {
-        "choose_lang": "Select Language / เลือกภาษา:\nPress 't' for Thai\nPress 'e' for English\n",
+        "choose_lang": "Select Language / เลือกภาษา:\nType 't' for Thai\nType 'e' for English\nChoose: ",
+        "invalid_lang": "Please type only 't' or 'e'",
         "intro1": "You wake up in a dark dungeon...",
         "intro2": "There is a fork in the road ahead.",
         "status": " ❤️ HP: {hp}/100 | ⚔️ ATK: {atk} | 🧪 Potions: {potions} | 💰 Gold: {gold}",
-        "controls": "\n[Move] W(Forward) A(Left) S(Backward) D(Right) | Q(Quit)",
-        "invalid_dir": "❌ Please press W, A, S, D to move, or Q to quit.",
+        "controls": "\n[Move] Type W(Forward) A(Left) S(Backward) D(Right) | Q(Quit) then press Enter",
+        "invalid_dir": "❌ Please type W, A, S, D to move, or Q to quit.",
         "combat_intro": "\n⚠️ You encountered {name} (HP: {hp}, ATK: {atk})! ⚠️",
-        "combat_ctrl": "\n[Combat] Press J(Attack) K(Potion) L(Run)",
+        "combat_ctrl": "\n[Combat] Type J(Attack) K(Potion) L(Run) then press Enter",
         "attack": "⚔️ You attacked {name} for {dmg} damage!",
         "potion_heal": "🧪 You drank a potion and restored {heal} HP!",
         "no_potion": "❌ You don't have enough potions!",
@@ -56,7 +55,7 @@ texts = {
         "event_trap_dead": "\n💀 You died from a trap! Game Over...",
         "event_fountain": "\n⛲ You found a sacred fountain! Restored {heal} HP!",
         "game_over": "\n=========================================\n💀 YOU DIED 💀\nYou collected {gold} Gold before dying.\nGame Over...\n=========================================",
-        "continue": "\n(Press any key to continue...)",
+        "continue": "\n(Press Enter to continue...)",
         "quit": "\nTired of adventuring already? Goodbye! 👋"
     }
 }
@@ -67,36 +66,18 @@ def t(key, **kwargs):
         return text.format(**kwargs)
     return text
 
-def clear_screen():
-    os.system('clear')
-
-def get_single_key():
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(fd)
-        ch = os.read(fd, 1).decode('utf-8', errors='ignore')
-    finally:
-        termios.tcsetattr(fd, termios.TCSANOW, old_settings)
-    return ch.lower()
-
 def print_status(player):
     print("==================================")
     print(t("status", hp=player['hp'], atk=player['atk'], potions=player['potions'], gold=player['gold']))
     print("==================================")
 
-def wait_for_any_key():
-    get_single_key()
-
 def combat(player, monster):
-    clear_screen()
     print(t("combat_intro", name=monster['name'], hp=monster['hp'], atk=monster['atk']))
     print(t("combat_ctrl"))
-    print("\n")
     
     while monster['hp'] > 0 and player['hp'] > 0:
         print_status(player)
-        key = get_single_key()
+        key = input("> ").strip().lower()
         
         if key == 'j':
             dmg = random.randint(5, player['atk'])
@@ -110,18 +91,15 @@ def combat(player, monster):
                 print(f"\n{t('potion_heal', heal=heal)}")
             else:
                 print(f"\n{t('no_potion')}")
-                time.sleep(1)
                 continue
         elif key == 'l':
             if random.random() < 0.5:
                 print(f"\n{t('run_success')}")
-                time.sleep(2)
                 return False
             else:
                 print(f"\n{t('run_fail')}")
         else:
-            print(f"\n❌ Error: Press only J, K, or L")
-            time.sleep(1)
+            print(f"\n❌ Please type J, K, or L")
             continue
 
         # Monster counter-attack
@@ -130,12 +108,8 @@ def combat(player, monster):
             player['hp'] -= m_dmg
             print(f"{t('monster_attack', name=monster['name'], dmg=m_dmg)}")
         
-        time.sleep(1.5)
-        clear_screen()
-        if monster['hp'] > 0 and player['hp'] > 0:
+        if player['hp'] > 0 and monster['hp'] > 0:
             print(t("combat_intro", name=monster['name'], hp=monster['hp'], atk=monster['atk']))
-            print(t("combat_ctrl"))
-            print("\n")
 
     if player['hp'] <= 0:
         return "dead"
@@ -144,35 +118,30 @@ def combat(player, monster):
         gold = random.randint(20, 50)
         player['gold'] += gold
         print(f"{t('gold_gain', gold=gold)}")
-        time.sleep(2)
         return "win"
 
 def main():
     global lang
     
-    clear_screen()
-    # --- Language Selection ---
     print("=========================================")
     print("   🗡️ DUNGEON ADVENTURE 🗡️")
     print("=========================================")
     print(t("choose_lang"))
     while True:
-        key = get_single_key()
+        key = input("> ").strip().lower()
         if key == 't':
             lang = 'th'
             break
         elif key == 'e':
             lang = 'en'
             break
+        else:
+            print(t("invalid_lang"))
 
-    # --- Game Start ---
-    clear_screen()
-    print("=========================================")
-    print("   🗡️ DUNGEON ADVENTURE 🗡️")
-    print("=========================================")
+    print("\n=========================================")
     print(t("intro1"))
     print(t("intro2"))
-    time.sleep(2)
+    input(t("continue"))
 
     player = {'hp': 100, 'atk': 15, 'potions': 3, 'gold': 0}
     
@@ -184,23 +153,21 @@ def main():
     ]
 
     while True:
-        clear_screen()
+        print("\n\n------------------------------------")
         print_status(player)
         print(t("controls"))
         
-        key = get_single_key()
+        key = input("> ").strip().lower()
         
         if key == 'q':
             print(f"\n{t('quit')}")
             break
         elif key in ['w', 'a', 's', 'd']:
-            pass # เดินได้ทั้ง 4 ทิศทาง
+            pass 
         else:
             print(f"\n{t('invalid_dir')}")
-            time.sleep(1)
             continue
 
-        clear_screen()
         event = random.randint(1, 100)
         
         if event <= 50: # Monster 50%
@@ -214,8 +181,7 @@ def main():
             gold_found = random.randint(10, 30)
             player['gold'] += gold_found
             print(t("event_treasure", gold=gold_found))
-            print(t("continue"))
-            wait_for_any_key()
+            input(t("continue"))
             
         elif event <= 90: # Trap 15%
             dmg = random.randint(10, 20)
@@ -224,15 +190,13 @@ def main():
             if player['hp'] <= 0:
                 print(t("event_trap_dead"))
                 break
-            print(t("continue"))
-            wait_for_any_key()
+            input(t("continue"))
             
         else: # Fountain 10%
             heal = random.randint(15, 30)
             player['hp'] = min(100, player['hp'] + heal)
             print(t("event_fountain", heal=heal))
-            print(t("continue"))
-            wait_for_any_key()
+            input(t("continue"))
 
 if __name__ == "__main__":
     main()
